@@ -26,13 +26,13 @@ df <- read.csv('onlinedeliverydata.csv')
 
 bgl <- sf::read_sf("C:/Users/USER/Desktop/Pos Data Science/Projetos Legais/Rappi/PincodeBoundary-master/Bangalore/boundary.geojson")
 
-glimpse(df)
 
-skim(df)
 
 # Observações do Data set, não tem data faltante e são poucos dados, maioria das variaveis são categóricas
 
 ## Ajuste de dados-----
+
+df %>% glimpse()
 
 ## Evitar usar recipes para arrumar as bases, Usar as bibliotecas do
 
@@ -55,6 +55,9 @@ df2 <- bake(preparado, new_data = NULL)
 #   select(-Review) %>%
 #   model.matrix(Output~., data = .) %>%
 #   as.data.frame()
+
+df %>% count("Maximum.wait.time")
+
 
 glimpse(df2)
 
@@ -86,8 +89,10 @@ df2 %>%
 # Variáveis Discretas
 
 df %>%
-  ggplot(aes(Monthly.Income, fill = Output)) +
-  geom_bar(position = 'dodge')
+  ggplot(aes(Monthly.Income, fill = factor(Output))) +
+  geom_bar(position = 'dodge')+
+  #scale_fill_brewer(palette = 'RdBu')+
+  theme_classic()
 
 colunas <- df %>%
   select(-latitude, -longitude, - Reviews, -Output, -Pin.code) %>%
@@ -116,18 +121,48 @@ graficos$Medium..P1.
 
 # Precisa primeiro converter o texto em uma ordem q a maquina entenda:
 
-valores <- c('Agree', "Strongly agree", "Neutral", "Disagree","Strongly disagree")
+# df[df=="Strongly disagree"] <- -3
+# df[df=="Disagree"] <- -1
+# df[df=="Agree"] <- 1
+# df[df=="Strongly Agree"] <- 3
+# df[df=="Neutral"] <- 0
 
-colunas_likert <- df %>% select(where(~any(.x %in% valores)))
 
-typeof(df$Good.Food.quality)
+valores <- c('Agree', "Strongly Agree", "Neutral", "Disagree","Strongly disagree")
 
-example2 <- revalue(df$Ease.and.convenient, c("Strongly disagree"= -3,
-                                              "Disagree"= -1,
-                                              "Agree"= 1,
-                                              "Strongly agree"= 3,
-                                              "Neutral"= 0))
+colunas_likert <- df %>% select(where(~any(.x %in% valores))) %>% colnames()
 
+
+
+df <- df %>% 
+  mutate(across(c(colunas_likert),~revalue(.x, c("Strongly disagree"= -3,
+                               "Disagree"= -1,
+                               "Agree"= 1,
+                               "Strongly agree"= 3,
+                               "Strongly Agree"= 3,
+                               "Neutral"= 0)))) %>%
+  mutate(across(c(colunas_likert), ~strtoi(.x))) %>% 
+  mutate(Output = ifelse(Output == "Yes", 1, 0)) %>% 
+  glimpse()
+
+
+
+
+df %>% mutate("More.restaurant.choices" = revalue(c("Strongly disagree"= -3,
+                                                    "Disagree"= -1,
+                                                    "Agree"= 1,
+                                                    "Strongly agree"= 3,
+                                                    "Neutral"= 0)))
+
+for (x in colunas_likert){
+  df %>% revalue(x, c("Strongly disagree"= -3,
+                                   "Disagree"= -1,
+                                   "Agree"= 1,
+                                   "Strongly agree"= 3,
+                                   "Neutral"= 0))
+  
+  
+}
 
 likert <- function(x) {
   revalue(df$x, c("Strongly disagree"= -3,
@@ -137,9 +172,11 @@ likert <- function(x) {
                   "Neutral"= 0))
 }
 
-dfcor <- map('Ease.and.convenient', likert)
+dfcor <- map(colunas_likert, likert)
 
-correlacao <- cor(dfcor)
+df %>% glimpse()
+
+correlacao <- cor(df %>% select(where(is.numeric)))
 
 likert
 
@@ -240,7 +277,7 @@ Receita2 <- recipe(Output ~ ., data = df) %>%
   step_select(-Reviews, -Pin.code) %>%
   step_normalize(all_numeric()) %>%
   step_dummy(all_nominal()) %>%
-  step_bin2factor(Output_Yes) %>%
+  #step_bin2factor(Output_Yes) %>%
   step_nzv(all_numeric_predictors())
 
 preparado <- prep(Receita2, df)

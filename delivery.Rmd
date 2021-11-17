@@ -43,26 +43,57 @@ correlacao <- cor(df %>% select(where(is.numeric)))
 
 ```
 
-## R Markdown
+## Desafio Kaggle: Online Food Delivery Preferences-Bangalore region
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Esse desafio foi proposto pelo usuário Ben Roshan que disponibilizou dados de uma pesquisa de satisfação relacionada a delivery de comida na cidade de Bangalore na Índia. No desafio, Bren propoem aos usuários do Kaggle a criar um modelo de classificalção que diga a probabilidade do usuário pedir comida online novamente.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Além desse desafio, me propus a realizar uma analise de cluster usando K médias para identificar quais grupos diversos de consumidores de deliverys tem na cidade e quais seus costumes, de forma a identificar oportunidades.
 
-```{r Analise Exploratória}
-df %>% glimpse()
+[link do projeto](https://www.kaggle.com/benroshan/online-food-delivery-preferencesbangalore-region)
+
+## Contexto do mercado de delivery
+
+"The on-demand industry is brutally competitive, characterized by low customer loyalty and high cash burns from significant promotional spend."
+
+the greatest route density in the world
+lower labor costs than in the West
+a long growth runway driven by low rates of online adoption.
+
+-  Falar dos cases de sucesso vistos na america latina
+
+
+[referência](https://sacra.com/research/rappi-the-meituan-of-latin-america/)
+[referêcnia](https://www.prnewswire.com/news-releases/-44-23-billion-growth-in-global-online-on-demand-food-delivery-services-market-2020-2024--convenience-involved-in-ordering-food-online-to-be-key-driver--technavio-301246314.html)
+
+
+## O Data Set
+
+Com o aumento de demanda em Bangalore na Índia, foi realizada nesta cidade uma pesquisa de marketing com o objetivo de analisar o mercado potencia que resultou no data set utilizado neste desafio.
+
+Por questão de estratégia da empresa que contratou a pesquisa, esta tem um foco em qualitativo dos dados, realizando diversas perguntas ao respondente, porém, isto limitou o número de respondentes. Dessa forma, temos um data set rico em preditora, mas limitado em validez quantitativa.
+
+Isso torna a analise deste data set desafiadora, porém rica. As intepretassões dos resultados devem levar em consideração o seu tamanho, mas as respostas encontradas resultam em informações valiosas para o negócio.
+
+
+Características do data Set:
+
+- 55 variáveis:
+* 5 numéricas
+* 50 categóricas
+- 350 respondentes
+- Uma variável resposta: Output (que diz se o cliente irá realizar um novo pedido ou não)
+
+
+
+```{r Data Raw}
+df_raw %>% glimpse()
 ```
 
-## Including Plots
+## Analises Exploratórias
 
 You can also embed plots, for example:
 
-```{r correlacao, echo=FALSE}
-ggcorrplot(correlacao, hc.order = TRUE, type = "lower",
-           outline.col = "white",
-           ggtheme = ggplot2::theme_gray,
-           colors = c("#6D9EC1", "white", "#E46726")) 
-```
+
 ```{r Analise exploratoria, echo=FALSE}
 colunas <- df %>%
   select(-latitude, -longitude, - Reviews, -Output, -Pin.code) %>%
@@ -80,5 +111,10 @@ graficos
 
 ```
 
+```{r correlacao, echo=FALSE}
+ggcorrplot(correlacao, hc.order = TRUE, type = "lower",
+           outline.col = "white",
+           ggtheme = ggplot2::theme_gray,
+           colors = c("#6D9EC1", "white", "#E46726")) 
+```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
