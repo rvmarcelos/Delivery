@@ -22,7 +22,7 @@ library(ggcorrplot)
 
 ## Data Set -----
 
-df <- read.csv('onlinedeliverydata.csv')
+df_raw <- read.csv('onlinedeliverydata.csv')
 
 bgl <- sf::read_sf("C:/Users/USER/Desktop/Pos Data Science/Projetos Legais/Rappi/PincodeBoundary-master/Bangalore/boundary.geojson")
 
@@ -128,24 +128,62 @@ graficos$Medium..P1.
 # df[df=="Neutral"] <- 0
 
 
-valores <- c('Agree', "Strongly Agree", "Neutral", "Disagree","Strongly disagree")
+likert_agree <- c('Agree', "Strongly Agree", "Neutral", "Disagree","Strongly disagree")
 
-colunas_likert <- df %>% select(where(~any(.x %in% valores))) %>% colnames()
+likert_important <- c('Important', "Moderately Important", "Slightly Important", "Unimportant","Very Important")
+
+
+colunas_likert_agree <- df_raw %>% select(where(~any(.x %in% likert_agree))) %>% colnames()
+
+colunas_likert_important <- df_raw %>% select(where(~any(.x %in% likert_important))) %>% colnames()
+
+df_raw %>% glimpse()
+
+df <- df_raw %>% 
+  # Tratando variavel likert: agree to disagree
+  mutate(across(c(colunas_likert_agree),~revalue(.x, c("Strongly disagree"= -3,
+                                                       "Disagree"= -1,
+                                                       "Agree"= 1,
+                                                       "Strongly agree"= 3,
+                                                       "Strongly Agree"= 3,
+                                                       "Neutral"= 0)))) %>%
+  mutate(across(c(colunas_likert_agree), ~strtoi(.x))) %>%
+  # Tratando variavel likert unimportant to very important
+  mutate(across(c(colunas_likert_important),
+                ~revalue(.x,
+                         c("Unimportant"= 0,
+                           "Slightly Important"= 1,
+                           "Moderately Important"= 2,
+                           "Important"= 4,
+                           "Very Important"= 6)))) %>%
+  mutate(across(c(colunas_likert_important), ~strtoi(.x))) %>%
+  # Tratando dummy da variavel resposta 
+  mutate(Output = ifelse(Output == "Yes", 1, 0)) 
 
 
 
-df <- df %>% 
-  mutate(across(c(colunas_likert),~revalue(.x, c("Strongly disagree"= -3,
-                               "Disagree"= -1,
-                               "Agree"= 1,
-                               "Strongly agree"= 3,
-                               "Strongly Agree"= 3,
-                               "Neutral"= 0)))) %>%
-  mutate(across(c(colunas_likert), ~strtoi(.x))) %>% 
+
+df <- df_raw %>% 
+  # Tratando variavel likert: agree to disagree
+  mutate(across(colunas_likert_agree,~revalue(.x, c("Strongly disagree"= -3,
+                                                       "Disagree"= -1,
+                                                       "Agree"= 1,
+                                                       "Strongly agree"= 3,
+                                                       "Strongly Agree"= 3,
+                                                       "Neutral"= 0)))) %>%
+  mutate(across(c(colunas_likert_agree), ~strtoi(.x))) %>%
+  # Tratando variavel likert unimportant to very important
+  mutate(across(c(colunas_likert_important),
+                ~revalue(.x,
+                         c("Unimportant"= 0,
+                           "Slightly Important"= 1,
+                           "Moderately Important"= 2,
+                           "Important"= 4,
+                           "Very Important"= 6)))) %>%
+  mutate(across(colunas_likert_important, ~strtoi(.x))) %>%
+  # Tratando dummy da variavel resposta 
   mutate(Output = ifelse(Output == "Yes", 1, 0)) %>% 
   glimpse()
-
-
 
 
 df %>% mutate("More.restaurant.choices" = revalue(c("Strongly disagree"= -3,
