@@ -52,7 +52,8 @@ df <- df_raw %>%
                            "Very Important"= 4)))) %>%
   mutate(across(c(colunas_likert_important), ~strtoi(.x))) %>%
   # Tratando dummy da variavel resposta 
-  mutate(Output = ifelse(Output == "Yes", 1, 0)) 
+  mutate(Output_grafico = Output) %>% 
+  mutate(Output = ifelse(Output == "Yes", 1, 0))  
 
 
 
@@ -112,22 +113,33 @@ df_raw %>% glimpse()
 
 ```{r Analise exploratoria dados categoricos, echo=FALSE}
 colunas_cat <- df %>%
-  select(-latitude, -longitude, - Reviews, -Output, -Pin.code) %>%
+  select(-latitude, -longitude, - Reviews, -Pin.code) %>%
+  select(!starts_with("Output")) %>% 
   select(where(is.character)) %>% 
   colnames()
 
 df %>%
-    ggplot(aes(Marital.Status))
+    ggplot(aes(Gender, fill = Output_grafico)) +
+    geom_bar(position = 'dodge')+
+    labs(y = "Contagem",
+       title = "Analise explorataria das categoricas",
+       subtitle = "Objetivo é avaliar correlação com variável resposta ou inconsistência na variável",
+       fill = "churn")+
+    theme_classic()
 
 
 faz_grafico <- function(x) {
   df %>%
-    ggplot(aes(.data[[x]], fill = factor(Output))) +
-    geom_bar(position = 'dodge', show.legend = FALSE)
+    ggplot(aes(.data[[x]], fill = Output_grafico)) +
+    geom_bar(position = 'dodge')+
+    labs(y = "Contagem",
+       title = "Analise explorataria das categoricas",
+       subtitle = "Objetivo é avaliar correlação com variável resposta ou inconsistência na variável",
+       caption = "Em dias",
+       fill = "churn")+
+    theme_classic()
 }
-graficos <- map(colunas_cat, faz_grafico)
-
-graficos
+(graficos_cat <- map(colunas_cat, faz_grafico))
 
 
 
@@ -136,14 +148,40 @@ graficos
 
 ```{r Analise exploratoria dados continuos}
 colunas_cont <- df %>%
-  select(-latitude, -longitude, - Reviews, -Output, -Pin.code) %>%
+  select(-latitude, -longitude, - Reviews, -Pin.code) %>%
+  select(!starts_with("Output")) %>% 
   select(where(is.numeric)) %>% 
   colnames()
 
-df %>%
-    ggplot(aes(.data[[x]], fill = factor(Output))) +
-    geom_bar(position = 'dodge', show.legend = FALSE)
+#variavel escala -3 a 3: Health.Concern
+# " escala 0 a 6:
+# Sem escala: Good.Taste
 
+df %>%
+    ggplot(aes(Good.Taste, fill = factor(Output))) +
+    geom_bar(position = 'dodge')+
+    labs(y = "Contagem",
+       title = "Analise explorataria das continuas",
+       subtitle = "Objetivo é avaliar correlação com variável resposta ou inconsistência na variável",
+       fill = "churn")+
+  scale_x_continuous(n.breaks = NULL)+
+    theme_classic()
+
+fazer_grafico_cont <- function(x){
+  df %>%
+    ggplot(aes(.data[[x]], fill = factor(Output))) +
+    geom_bar(position = 'dodge')+
+    labs(y = "Contagem",
+       title = "Analise explorataria das continuas",
+       subtitle = "Objetivo é avaliar correlação com variável resposta ou inconsistência na variável",
+       fill = "churn")+
+  scale_x_continuous(breaks = (-3:100))+
+    theme_classic()
+  
+  
+}
+
+(graficos_cont <- map(colunas_cont, fazer_grafico_cont))
 
 ```
 
@@ -152,9 +190,22 @@ df %>%
 ### Análise correlação:
 
 ```{r correlacao, echo=FALSE}
+df %>% select(where(is.numeric)) %>% colnames()
+
+correlacao <- round(cor(df %>% select(where(is.numeric))), 1)
+
+#As 10 maiores correlações com a variável resposta (pode dar ruim se aumentar o número de colunas)
 
 
-correlacao <- cor(df %>% select(where(is.numeric)))
+top10var <- data.frame(n = c(correlacao)) %>%
+  slice_tail(n = 39) %>%
+  mutate(col = df %>%select(where(is.numeric)) %>%colnames()) %>% 
+  filter(n >= .2 |n <= -.2) %>% 
+  select(col) %>% 
+  as.list()
+
+
+typeof(c(correlacao))
 
 ggcorrplot(correlacao, hc.order = TRUE, type = "lower",
            outline.col = "white",
