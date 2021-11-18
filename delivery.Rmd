@@ -164,7 +164,19 @@ test  <- testing(split)
 ### Modelo Knn:
 
 ```{r Modelo KNN}
+library(FNN)
 
+set.seed(7)
+
+k_otimo <- 7
+
+df_knn <- assado %>% 
+  mutate(Output = ifelse(Output == 1, "yes", "no"))
+
+fit <- knn.reg(train = train, 
+               test = test, 
+               y = train$Output, 
+               k = k_otimo)  
 
 
 ```
@@ -172,6 +184,7 @@ test  <- testing(split)
 ### Regressão Linear
 
 ```{r Modelo Regressao logistica}
+set.seed(7)
 
 fit_glm <- logistic_reg() %>%
   set_engine("glm") %>%
