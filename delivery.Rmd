@@ -11,8 +11,8 @@ library(tidymodels)
 library(skimr)
 library(plyr)
 library(dplyr)
-library(torch)
-library(keras)
+#library(torch) Torch está com problema
+#library(keras)
 library(magrittr)
 library(ggplot2)
 library(plotly)
@@ -54,7 +54,6 @@ df <- df_raw %>%
   # Tratando dummy da variavel resposta 
   mutate(Output = ifelse(Output == "Yes", 1, 0)) 
 
-correlacao <- cor(df %>% select(where(is.numeric)))
 
 
 ```
@@ -107,28 +106,56 @@ df_raw %>% glimpse()
 
 ## Analises Exploratórias
 
-You can also embed plots, for example:
+
+### Análise variáveis Categóricas:
 
 
-```{r Analise exploratoria, echo=FALSE}
-colunas <- df %>%
+```{r Analise exploratoria dados categoricos, echo=FALSE}
+colunas_cat <- df %>%
   select(-latitude, -longitude, - Reviews, -Output, -Pin.code) %>%
+  select(where(is.character)) %>% 
   colnames()
+
+df %>%
+    ggplot(aes(Marital.Status))
+
 
 faz_grafico <- function(x) {
   df %>%
     ggplot(aes(.data[[x]], fill = factor(Output))) +
     geom_bar(position = 'dodge', show.legend = FALSE)
 }
-graficos <- map(colunas, faz_grafico)
+graficos <- map(colunas_cat, faz_grafico)
 
 graficos
+
+
+
+```
+### Análise variáveis numéricas
+
+```{r Analise exploratoria dados continuos}
+colunas_cont <- df %>%
+  select(-latitude, -longitude, - Reviews, -Output, -Pin.code) %>%
+  select(where(is.numeric)) %>% 
+  colnames()
+
+df %>%
+    ggplot(aes(.data[[x]], fill = factor(Output))) +
+    geom_bar(position = 'dodge', show.legend = FALSE)
 
 
 ```
 
 
+
+### Análise correlação:
+
 ```{r correlacao, echo=FALSE}
+
+
+correlacao <- cor(df %>% select(where(is.numeric)))
+
 ggcorrplot(correlacao, hc.order = TRUE, type = "lower",
            outline.col = "white",
            ggtheme = ggplot2::theme_gray,
