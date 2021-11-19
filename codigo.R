@@ -3,7 +3,7 @@
 # Projeto Delivery de Comida - Projeto Clusters
 #install.packages("rjson")
 #install.packages("ggcorrplot")
-
+#teste
 library(tidyverse)
 library(tidymodels)
 library(skimr)
