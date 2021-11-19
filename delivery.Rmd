@@ -3,6 +3,7 @@ title: "Delivery"
 author: "Marcelo Setubal"
 date: "16/11/2021"
 output: html_document
+e-mail: rvmarcelos@gmail.com
 ---
 
 ```{r setup, include=FALSE}
@@ -201,8 +202,7 @@ top10var <- data.frame(n = c(correlacao)) %>%
   slice_tail(n = 39) %>%
   mutate(col = df %>%select(where(is.numeric)) %>%colnames()) %>% 
   filter(n >= .2 |n <= -.2) %>% 
-  select(col) %>% 
-  as.list()
+  pull(col) 
 
 
 typeof(c(correlacao))
@@ -217,13 +217,14 @@ ggcorrplot(correlacao, hc.order = TRUE, type = "lower",
 
 ```{r Recipe, include=FALSE}
 Receita <- recipe(Output ~ ., data = df) %>%
-  step_select(-Reviews,
-              -Pin.code,
-              -latitude,
-              -longitude,
-              -Medium..P1.,
-              -Perference.P1.,
-              -Perference.P2.) %>%
+  # step_select(-Reviews,
+  #             -Pin.code,
+  #             -latitude,
+  #             -longitude,
+  #             -Medium..P1.,
+  #             -Perference.P1.,
+  #             -Perference.P2.) %>%
+  step_select(top10var) %>% 
   step_normalize(all_numeric_predictors()) %>%
   step_dummy(all_nominal()) %>%
   step_bin2factor(Output) %>% 
@@ -246,15 +247,27 @@ library(FNN)
 
 set.seed(7)
 
-k_otimo <- 7
+k_otimo <- 7 # Como calcular o K
 
-df_knn <- assado %>% 
-  mutate(Output = ifelse(Output == 1, "yes", "no"))
+df_knn_train <- train %>% 
+  mutate(Output = ifelse(Output == "yes", 1, 0))
 
-fit <- knn.reg(train = train, 
-               test = test, 
-               y = train$Output, 
+df_knn_test <- test %>% 
+  mutate(Output = ifelse(Output == "yes", 1, 0))
+
+fit_knn <- knn.reg(train = df_knn_train, 
+               test = df_knn_test, 
+               y = df_knn_train$Output, 
                k = k_otimo)  
+
+
+
+
+df_pred_knn <- data.frame(Estimado = fit_knn$pred,
+                          Observado = df_knn_test$Output)
+
+df_pred_knn %>% roc_auc(truth = as.factor(Observado), estimate = Estimado)
+df_pred_knn %>% rmse(truth = Observado, estimate = Estimado)
 
 
 ```
@@ -276,17 +289,25 @@ fitted_glm <- fit_glm %>%
   mutate(observado_teste = ifelse(observado == "yes",1,0)) %>% 
   mutate(observado_modelo = ifelse(.pred_yes >=.5, 1, 0))
 
-roc_glm <- fitted_glm %>%
+fitted_glm %>%
   roc_auc(observado, .pred_yes)
 
-rmse_glm <- fitted_glm %>%
+fitted_glm %>%
   rmse(observado_teste, .pred_yes)
 
 ```
-### Performance dos modelos
+### Modelo de árvore aleatória
 
 
-```{r Performance dos modelos}
+```{r Random Florest}
+
+rand_forest(
+  mode = "regression",
+  engine = "ranger",
+  mtry = NULL,
+  trees = NULL,
+  min_n = NULL
+)
 
 
 
